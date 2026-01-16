@@ -3,7 +3,7 @@ import requests
 
 API_URL = "https://www.omdbapi.com/"
 API_KEY = "7367edc7"
-DB_URL = "sqlite:///movies.db"
+DB_URL = "sqlite:///data/movies.db"
 
 
 # Create the engine

@@ -1,6 +1,7 @@
-import movie_storage_sql as storage
+from Movie_database_project.movie_project_SQL.storage import movie_storage_sql as storage
 import statistics
 import random
+from pathlib import Path
 
 
 def menu_of_programm():
@@ -125,12 +126,19 @@ def command_generate_website(movies):
                 </div>
             </li>\n"""
 
-    with open("index_template.html", "r",) as file:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent  # zwei Ebenen hoch, da movies.py in 'app' liegt
+    template_path = PROJECT_ROOT / "web" / "index_template.html"
+    output_path = PROJECT_ROOT / "web" / "index.html"
+
+    # Template öffnen
+    with open(template_path, "r") as file:
         template_html = file.read()
 
+    # Platzhalter ersetzen
     full_website_code = template_html.replace("__TEMPLATE_MOVIE_GRID__", movie_cards_html)
 
-    with open("index.html", "w") as file:
+    # In index.html speichern
+    with open(output_path, "w") as file:
         file.write(full_website_code)
 
     print("Website generated successfully!")
