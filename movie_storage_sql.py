@@ -1,7 +1,10 @@
 from sqlalchemy import create_engine, text
+import requests
 
-# Define the database URL
+API_URL = "https://www.omdbapi.com/"
+API_KEY = "7367edc7"
 DB_URL = "sqlite:///movies.db"
+
 
 # Create the engine
 engine = create_engine(DB_URL, echo=True)
@@ -27,8 +30,32 @@ def list_movies():
 
     return {row[0]: {"year": row[1], "rating": row[2]} for row in movies}
 
-def add_movie(title, year, rating):
-    """Add a new movie to the database."""
+
+def add_movie(title):
+    """Fetch movie data from OMDb and add it to the database"""
+    params = {
+        "apikey": API_KEY,
+        "t": title
+    }
+    #Checking if the API request gets status 200 OK
+    response = requests.get(API_URL, params=params)
+    if response.status_code != 200:
+        print("API request failed")
+        return
+
+    #Checking if movie exists
+    data = response.json()
+    if data.get("Response") == "False":
+        print("Movie not found")
+        return
+
+    try:
+        year = int(data["Year"])
+        rating = float(data["imdbRating"])
+    except (KeyError, ValueError):
+        print("Invalid data from API")
+        return
+
     with engine.connect() as connection:
         try:
             connection.execute(text("INSERT INTO movies (title, year, rating) VALUES (:title, :year, :rating)"),
@@ -37,6 +64,7 @@ def add_movie(title, year, rating):
             print(f"Movie '{title}' added successfully.")
         except Exception as e:
             print(f"Error: {e}")
+
 
 def delete_movie(title):
     """Delete a movie from the database."""

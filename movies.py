@@ -40,20 +40,8 @@ def command_add_movie():
     if new_movie_name in movies:
         print(f"Movie {new_movie_name} already exists!")
         return
-    while True:
-        try:
-            movie_year = int(input("Enter year of the movie: "))
-            break
-        except ValueError:
-            print("Please enter a valid year")
-    while True:
-        try:
-            movie_rating = float(input("Enter new movie rating: "))
-            break
-        except ValueError:
-            print("Please enter a valid rating")
 
-    storage.add_movie(new_movie_name, movie_year, movie_rating)
+    storage.add_movie(new_movie_name)
 
 
 def command_remove_movie(movies):
