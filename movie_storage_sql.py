@@ -16,7 +16,9 @@ with engine.connect() as connection:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT UNIQUE NOT NULL,
             year INTEGER NOT NULL,
-            rating REAL NOT NULL
+            rating REAL NOT NULL,
+            poster_url TEXT,
+            imdb_id TEXT
         )
     """))
     connection.commit()
@@ -52,14 +54,16 @@ def add_movie(title):
     try:
         year = int(data["Year"])
         rating = float(data["imdbRating"])
+        imdb_id = data.get("imdbID")
+        poster_url = f"https://img.omdbapi.com/?apikey={API_KEY}&i={imdb_id}" if imdb_id else None
     except (KeyError, ValueError):
         print("Invalid data from API")
         return
 
     with engine.connect() as connection:
         try:
-            connection.execute(text("INSERT INTO movies (title, year, rating) VALUES (:title, :year, :rating)"),
-                               {"title": title, "year": year, "rating": rating})
+            connection.execute(text("INSERT INTO movies (title, year, rating, poster_url, imdb_id) VALUES (:title, :year, :rating, :poster_url, :imdb_id)"),
+                               {"title": title, "year": year, "rating": rating, "poster_url": poster_url, "imdb_id": imdb_id})
             connection.commit()
             print(f"Movie '{title}' added successfully.")
         except Exception as e:
