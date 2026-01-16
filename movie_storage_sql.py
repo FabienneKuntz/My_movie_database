@@ -7,7 +7,7 @@ DB_URL = "sqlite:///movies.db"
 
 
 # Create the engine
-engine = create_engine(DB_URL, echo=True)
+engine = create_engine(DB_URL) #echo=True to see what SQL does
 
 # Create the movies table if it does not exist
 with engine.connect() as connection:
@@ -30,7 +30,7 @@ def list_movies():
         result = connection.execute(text("SELECT title, year, rating, poster_url FROM movies"))
         movies = result.fetchall()
 
-    return {row[0]: {"year": row[1], "rating": row[2]} for row in movies}
+    return {row[0]: {"year": row[1], "rating": row[2], "poster_url": row[3]} for row in movies}
 
 
 def add_movie(title):
