@@ -110,6 +110,32 @@ def command_best_movies(movies):
         print(f'{movie}({infos["year"]}): {infos["rating"]}')
 
 
+def command_generate_website(movies):
+    """Generates the html code to create a website"""
+    movie_cards_html = ""
+    for title, info in movies.items():
+        poster_url = info.get("poster_url")
+        movie_cards_html += f"""    <li>
+                <div class="movie">
+                    <img class="movie-poster"
+                         src="{poster_url}"
+                         title="{title}"/>
+                    <div class="movie-title">{title}</div>
+                    <div class="movie-year">{info['year']}</div>
+                </div>
+            </li>\n"""
+
+    with open("index_template.html", "r",) as file:
+        template_html = file.read()
+
+    full_website_code = template_html.replace("__TEMPLATE_MOVIE_GRID__", movie_cards_html)
+
+    with open("index.html", "w") as file:
+        file.write(full_website_code)
+
+    print("Website generated successfully!")
+
+
 def main():
     """Main function to call everything"""
     print("*-*-*-*-*", "My Movies", "*-*-*-*-*\n")
@@ -132,11 +158,8 @@ def main():
             command_search_movie(movies)
         elif choice == 8:
             command_best_movies(movies)
-            """
         elif choice == 9:
-            command_generate_website()
-        
-            """
+            command_generate_website(movies)
         elif choice == 0:
             print("Bye!")
             break
