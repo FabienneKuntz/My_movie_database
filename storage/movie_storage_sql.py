@@ -3,18 +3,20 @@ import requests
 
 API_URL = "https://www.omdbapi.com/"
 API_KEY = "7367edc7"
-DB_URL = "sqlite:///data/movies.db"
+MOVIE_DB_URL = "sqlite:///data/movies.db"
+USER_DB_URL = "sqlite:///data/users.db"
 
 
 # Create the engine
-engine = create_engine(DB_URL) #echo=True to see what SQL does
+movie_engine = create_engine(MOVIE_DB_URL) #echo=True to see what SQL does
 
 # Create the movies table if it does not exist
-with engine.connect() as connection:
+with movie_engine.connect() as connection:
     connection.execute(text("""
         CREATE TABLE IF NOT EXISTS movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT UNIQUE NOT NULL,
+            user_id INTEGER,
+            title TEXT NOT NULL,
             year INTEGER NOT NULL,
             rating REAL NOT NULL,
             poster_url TEXT,
@@ -23,10 +25,22 @@ with engine.connect() as connection:
     """))
     connection.commit()
 
+user_engine = create_engine(USER_DB_URL)
+
+#Create the user table if it doesn't already exist
+with user_engine.connect() as connection:
+    connection.execute(text("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL
+        )
+    """))
+    connection.commit()
+
 
 def list_movies():
     """Retrieve all movies from the database."""
-    with engine.connect() as connection:
+    with movie_engine.connect() as connection:
         result = connection.execute(text("SELECT title, year, rating, poster_url FROM movies"))
         movies = result.fetchall()
 
