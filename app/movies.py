@@ -1,4 +1,4 @@
-from Movie_database_project.movie_project_SQL.storage import movie_storage_sql as storage
+from storage import movie_storage_sql as storage
 import statistics
 import random
 from pathlib import Path
