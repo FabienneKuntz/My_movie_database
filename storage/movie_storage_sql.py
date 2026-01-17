@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, text
 import requests
+from sqlalchemy.engine import row
 
 API_URL = "https://www.omdbapi.com/"
 API_KEY = "7367edc7"
@@ -7,7 +8,7 @@ MOVIE_DB_URL = "sqlite:///data/movies.db"
 USER_DB_URL = "sqlite:///data/users.db"
 
 
-# Create the engine
+# Create movie engine
 movie_engine = create_engine(MOVIE_DB_URL) #echo=True to see what SQL does
 
 # Create the movies table if it does not exist
@@ -38,16 +39,39 @@ with user_engine.connect() as connection:
     connection.commit()
 
 
-def list_movies():
+def list_users():
+    """Retrieve all users from user database"""
+    with user_engine.connect() as conn:
+        result = conn.execute(text("SELECT user_id, first_name FROM users"))
+        users = result.fetchall()
+
+    return {row[0]: row[1] for row in users}
+
+
+def add_user(first_name):
+    """Add a new user to the database."""
+    with user_engine.connect() as conn:
+        try:
+            conn.execute(text("INSERT INTO users (first_name) VALUES (:first_name)"),
+                               {"first_name": first_name})
+            conn.commit()
+            print(f"User '{first_name}' added successfully.")
+        except Exception as e:
+            print(f"Error: {e}")
+
+
+def list_movies(user_id):
     """Retrieve all movies from the database."""
-    with movie_engine.connect() as connection:
-        result = connection.execute(text("SELECT title, year, rating, poster_url FROM movies"))
+    with movie_engine.connect() as conn:
+        result = conn.execute(text("SELECT user_id, title, year, rating, poster_url FROM movies WHERE user_id = :user_id"),
+                        {"user_id": user_id})
+
         movies = result.fetchall()
 
-    return {row[0]: {"year": row[1], "rating": row[2], "poster_url": row[3]} for row in movies}
+    return {row[1]: {"user_id": row[0], "year": row[2], "rating": row[3], "poster_url": row[4]} for row in movies}
 
 
-def add_movie(title):
+def add_movie(user_id, title):
     """Fetch movie data from OMDb and add it to the database"""
     params = {
         "apikey": API_KEY,
@@ -74,24 +98,24 @@ def add_movie(title):
         print("Invalid data from API")
         return
 
-    with engine.connect() as connection:
+    with movie_engine.connect() as conn:
         try:
-            connection.execute(text("INSERT INTO movies (title, year, rating, poster_url, imdb_id) VALUES (:title, :year, :rating, :poster_url, :imdb_id)"),
-                               {"title": title, "year": year, "rating": rating, "poster_url": poster_url, "imdb_id": imdb_id})
-            connection.commit()
+            conn.execute(text("INSERT INTO movies (user_id, title, year, rating, poster_url, imdb_id) VALUES (:user_id, :title, :year, :rating, :poster_url, :imdb_id)"),
+                               {"user_id": user_id, "title": title, "year": year, "rating": rating, "poster_url": poster_url, "imdb_id": imdb_id})
+            conn.commit()
             print(f"Movie '{title}' added successfully.")
         except Exception as e:
             print(f"Error: {e}")
 
 
-def delete_movie(title):
+def delete_movie(user_id, title):
     """Delete a movie from the database."""
-    with engine.connect() as connection:
-        result = connection.execute(
-            text("DELETE FROM movies WHERE title = :title"),
-            {"title": title}
+    with movie_engine.connect() as conn:
+        result = conn.execute(
+            text("DELETE FROM movies WHERE title = :title AND user_id = :user_id"),
+            {"user_id": user_id, "title": title}
         )
-        connection.commit()
+        conn.commit()
 
         if result.rowcount == 0:
             print(f"Movie '{title}' does not exist.")
@@ -99,14 +123,14 @@ def delete_movie(title):
             print(f"Movie '{title}' deleted successfully.")
 
 
-def update_movie(title, rating):
+def update_movie(user_id, title, rating):
     """Update a movie's rating in the database."""
-    with engine.connect() as connection:
-        result = connection.execute(
-            text("UPDATE movies SET rating = :rating WHERE title = :title"),
-            {"title": title, "rating": rating}
+    with movie_engine.connect() as conn:
+        result = conn.execute(
+            text("UPDATE movies SET rating = :rating WHERE title = :title AND user_id = :user_id"),
+            {"user_id": user_id, "title": title, "rating": rating}
         )
-        connection.commit()
+        conn.commit()
 
         if result.rowcount == 0:
             print(f"Movie '{title}' does not exist.")
